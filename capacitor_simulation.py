@@ -52,10 +52,15 @@ for i in range(arrow_count):
 plate1_electrons = [[x, plate1_pos[1] + plate_height // 2] for x in range(plate1_pos[0], plate1_pos[0] + plate_width, plate_width // num_charges)]
 plate2_electrons = [[x, plate2_pos[1] + plate_height // 2] for x in range(plate2_pos[0], plate2_pos[0] + plate_width, plate_width // num_charges)]
 
+# 放電フラグ
+discharging = False
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            discharging = True  # 左クリックで放電開始
     
     # 背景の描画
     screen.fill(WHITE)
@@ -64,36 +69,64 @@ while running:
     pygame.draw.rect(screen, BLACK, (*plate1_pos, plate_width, plate_height))
     pygame.draw.rect(screen, BLACK, (*plate2_pos, plate_width, plate_height))
     
-    # 電荷の移動と描画
-    for charge in charges:
-        if charge[1] > plate1_pos[1] + plate_height // 2:
-            charge[1] -= charge_speed
-        else:
-            # 電荷が上側の金属板に到達したら、蓄積された電荷リストに追加
-            if charge not in plate1_charges:
-                plate1_charges.append(charge)
-                # 下側の金属板にも対応する電荷を追加
-                plate2_charges.append([charge[0], plate2_pos[1] + plate_height // 2])
+    if not discharging:
+        # 電荷の移動と描画
+        for charge in charges:
+            if charge[1] > plate1_pos[1] + plate_height // 2:
+                charge[1] -= charge_speed
+            else:
+                # 電荷が上側の金属板に到達したら、蓄積された電荷リストに追加
+                if charge not in plate1_charges:
+                    plate1_charges.append(charge)
+                    # 下側の金属板にも対応する電荷を追加
+                    plate2_charges.append([charge[0], plate2_pos[1] + plate_height // 2])
     
-    # 蓄積された電荷の描画（正に帯電する金属板）
-    for charge in plate1_charges:
-        pygame.draw.circle(screen, RED, charge, charge_radius)
-    
-    # 蓄積された電荷の描画（負に帯電する金属板）
-    for charge in plate2_charges:
-        pygame.draw.circle(screen, BLUE, charge, charge_radius)
+        # 蓄積された電荷の描画（正に帯電する金属板）
+        for charge in plate1_charges:
+            pygame.draw.circle(screen, RED, charge, charge_radius)
+        
+        # 蓄積された電荷の描画（負に帯電する金属板）
+        for charge in plate2_charges:
+            pygame.draw.circle(screen, BLUE, charge, charge_radius)
 
-    # 金属板内の電子の動きの描画（上側金属板）
-    for electron in plate1_electrons:
-        if len(plate1_charges) > 0 and electron[1] > plate1_pos[1]:
-            electron[1] -= charge_speed / 2  # 電子が上に移動
-        pygame.draw.circle(screen, RED, electron, charge_radius // 2)
-    
-    # 金属板内の電子の動きの描画（下側金属板）
-    for electron in plate2_electrons:
-        if len(plate2_charges) > 0 and electron[1] < plate2_pos[1] + plate_height:
-            electron[1] += charge_speed / 2  # 電子が下に移動
-        pygame.draw.circle(screen, BLUE, electron, charge_radius // 2)
+        # 金属板内の電子の動きの描画（上側金属板）
+        for electron in plate1_electrons:
+            if len(plate1_charges) > 0 and electron[1] > plate1_pos[1]:
+                electron[1] -= charge_speed / 2  # 電子が上に移動
+            pygame.draw.circle(screen, RED, electron, charge_radius // 2)
+        
+        # 金属板内の電子の動きの描画（下側金属板）
+        for electron in plate2_electrons:
+            if len(plate2_charges) > 0 and electron[1] < plate2_pos[1] + plate_height:
+                electron[1] += charge_speed / 2  # 電子が下に移動
+            pygame.draw.circle(screen, BLUE, electron, charge_radius // 2)
+
+    else:
+        # 放電アニメーション
+        if plate1_charges:
+            plate1_charges.pop()
+        if plate2_charges:
+            plate2_charges.pop()
+
+        # 放電時の金属板内の電子の動き（上側金属板）
+        for electron in plate1_electrons:
+            if electron[1] < plate1_pos[1] + plate_height // 2:
+                electron[1] += charge_speed / 2  # 電子が元の位置に戻る
+            pygame.draw.circle(screen, RED, electron, charge_radius // 2)
+        
+        # 放電時の金属板内の電子の動き（下側金属板）
+        for electron in plate2_electrons:
+            if electron[1] > plate2_pos[1]:
+                electron[1] -= charge_speed / 2  # 電子が元の位置に戻る
+            pygame.draw.circle(screen, BLUE, electron, charge_radius // 2)
+
+        # 蓄積された電荷の描画（正に帯電する金属板）
+        for charge in plate1_charges:
+            pygame.draw.circle(screen, RED, charge, charge_radius)
+        
+        # 蓄積された電荷の描画（負に帯電する金属板）
+        for charge in plate2_charges:
+            pygame.draw.circle(screen, BLUE, charge, charge_radius)
 
     # 絶縁体内の電子の動き（分極）の描画
     for arrow in polarization_arrows:
