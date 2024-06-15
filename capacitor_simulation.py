@@ -5,7 +5,7 @@ import sys
 pygame.init()
 width, height = 800, 600
 screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("コンデンサ充電シミュレーション")  # set_captionに修正
+pygame.display.set_caption("コンデンサ充電シミュレーション")
 
 # 色の定義
 WHITE = (255, 255, 255)
@@ -48,6 +48,10 @@ for i in range(arrow_count):
     x = width // 2 - plate_width // 2 + i * (plate_width // arrow_count)
     polarization_arrows.append([x, height // 2, x, height // 2])
 
+# 金属板内の電子の初期化
+plate1_electrons = [[x, plate1_pos[1] + plate_height // 2] for x in range(plate1_pos[0], plate1_pos[0] + plate_width, plate_width // num_charges)]
+plate2_electrons = [[x, plate2_pos[1] + plate_height // 2] for x in range(plate2_pos[0], plate2_pos[0] + plate_width, plate_width // num_charges)]
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -78,6 +82,18 @@ while running:
     # 蓄積された電荷の描画（負に帯電する金属板）
     for charge in plate2_charges:
         pygame.draw.circle(screen, BLUE, charge, charge_radius)
+
+    # 金属板内の電子の動きの描画（上側金属板）
+    for electron in plate1_electrons:
+        if len(plate1_charges) > 0 and electron[1] > plate1_pos[1]:
+            electron[1] -= charge_speed / 2  # 電子が上に移動
+        pygame.draw.circle(screen, RED, electron, charge_radius // 2)
+    
+    # 金属板内の電子の動きの描画（下側金属板）
+    for electron in plate2_electrons:
+        if len(plate2_charges) > 0 and electron[1] < plate2_pos[1] + plate_height:
+            electron[1] += charge_speed / 2  # 電子が下に移動
+        pygame.draw.circle(screen, BLUE, electron, charge_radius // 2)
 
     # 絶縁体内の電子の動き（分極）の描画
     for arrow in polarization_arrows:
