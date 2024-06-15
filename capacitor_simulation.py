@@ -42,7 +42,7 @@ plate2_charges = []  # 負に帯電する金属板（下側）
 polarization_arrows = []
 
 # 絶縁体内の矢印の初期化
-arrow_count = 10
+arrow_count = 40  # 矢印の数を増やして密度を上げる
 arrow_length = 20
 for i in range(arrow_count):
     x = width // 2 - plate_width // 2 + i * (plate_width // arrow_count)
